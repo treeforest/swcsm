@@ -277,6 +277,19 @@ SGD_RV SDF_OpenSession(SGD_HANDLE hDeviceHandle, SGD_HANDLE *phSessionHandle);
 // 4.关闭会话
 SGD_RV SDF_CloseSession(SGD_HANDLE hSessionHandle);
 
+#ifdef __cplusplus
+}
+#endif
+
+#endif /*#ifndef _SW_SDS_H_*/
+
+#ifndef __SWCSM__
+#define __SWCSM__ 1
+
+#ifdef __cplusplus
+extern "C"{
+#endif
+
 /*密码卡管理函数*/
 // 5.初始化设备
 SGD_RV  SWCSM_InitDevice(SGD_HANDLE hSessionHandle, SGD_UINT32 uiFlag);
@@ -325,4 +338,4 @@ SGD_RV SWCSM_RestoreFinal(SGD_HANDLE hSessionHandle);
 }
 #endif
 
-#endif /*#ifndef _SW_SDS_H_*/
+#endif /*#ifndef __SWCSM__*/

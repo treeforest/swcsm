@@ -14,7 +14,7 @@ struct LibHandle {
 	void *handle;
 };
 
-struct LibHandle *NewLib(const char *iLibrary)
+struct LibHandle *NewLib2(const char *iLibrary)
 {
 	struct LibHandle *h = calloc(1,sizeof(struct LibHandle));
 	h->handle = dlopen(iLibrary,1);
@@ -25,8 +25,7 @@ struct LibHandle *NewLib(const char *iLibrary)
 	return h;
 }
 
-
-void DestroyLib(struct LibHandle *h)
+void DestroyLib2(struct LibHandle *h)
 {
 	if (!h) {
 		return;
@@ -42,28 +41,28 @@ void DestroyLib(struct LibHandle *h)
 
 // *** 设备管理类函数 ***
 // 1.打开设备
-SGD_RV SDFOpenDevice(struct LibHandle * h, SGD_HANDLE *phDeviceHandle)
+SGD_RV SDFOpenDevice2(struct LibHandle * h, SGD_HANDLE *phDeviceHandle)
 {
     typedef SGD_RV (*FPTR)(SGD_HANDLE*);
 	FPTR fptr = (FPTR)dlsym(h->handle, "SDF_OpenDevice");
 	return (*fptr)(phDeviceHandle);
 }
 // 2.关闭设备
-SGD_RV SDFCloseDevice(struct LibHandle * h,SGD_HANDLE hDeviceHandle)
+SGD_RV SDFCloseDevice2(struct LibHandle * h,SGD_HANDLE hDeviceHandle)
 {
     typedef SGD_RV (*FPTR)(SGD_HANDLE);
 	FPTR fptr = (FPTR)dlsym(h->handle, "SDF_CloseDevice");
 	return (*fptr)(hDeviceHandle);
 }
 // 3.创建会话
-SGD_RV SDFOpenSession(struct LibHandle * h,SGD_HANDLE hDeviceHandle, SGD_HANDLE *phSessionHandle)
+SGD_RV SDFOpenSession2(struct LibHandle * h,SGD_HANDLE hDeviceHandle, SGD_HANDLE *phSessionHandle)
 {
     typedef SGD_RV (*FPTR)(SGD_HANDLE,SGD_HANDLE *);
 	FPTR fptr = (FPTR)dlsym(h->handle, "SDF_OpenSession");
 	return (*fptr)(hDeviceHandle,phSessionHandle);
 }
 // 4.关闭会话
-SGD_RV SDFCloseSession(struct LibHandle * h,SGD_HANDLE hSessionHandle)
+SGD_RV SDFCloseSession2(struct LibHandle * h,SGD_HANDLE hSessionHandle)
 {
     typedef SGD_RV (*FPTR)(SGD_HANDLE);
 	FPTR fptr = (FPTR)dlsym(h->handle, "SDF_CloseSession");
@@ -163,9 +162,9 @@ SGD_RV SWCSMRestoreFinal(struct LibHandle * h, SGD_HANDLE hSessionHandle)
 import "C"
 import (
 	"fmt"
-	"github.com/pingcap/errors"
 	"unsafe"
 
+	"github.com/pingcap/errors"
 	"github.com/tjfoc/gmsm/sm2"
 )
 
@@ -173,7 +172,7 @@ func New(libPath string) *Ctx {
 	c := new(Ctx)
 	mod := C.CString(libPath)
 	defer C.free(unsafe.Pointer(mod))
-	c.libHandle = C.NewLib(mod)
+	c.libHandle = C.NewLib2(mod)
 	if c.libHandle == nil {
 		return nil
 	}
@@ -226,31 +225,35 @@ func ConvertToECCrefPublicKeyC(publicKey *sm2.PublicKey) (pucPublicKey C.ECCrefP
 	return pucPublicKey
 }
 
+func (c *Ctx) Destroy() {
+	C.DestroyLib2(c.libHandle)
+}
+
 // SDFOpenDevice 1.打开设备
 func (c *Ctx) SDFOpenDevice() (deviceHandle SessionHandle, err error) {
 	var rv C.SGD_RV
 	var dH C.SGD_HANDLE
-	rv = C.SDFOpenDevice(c.libHandle, &dH)
+	rv = C.SDFOpenDevice2(c.libHandle, &dH)
 	deviceHandle = SessionHandle(dH)
 	return deviceHandle, ToError(rv)
 }
 
 // SDFCloseDevice 2.关闭设备
 func (c *Ctx) SDFCloseDevice(deviceHandle SessionHandle) (err error) {
-	var rv = C.SDFCloseDevice(c.libHandle, C.SGD_HANDLE(deviceHandle))
+	var rv = C.SDFCloseDevice2(c.libHandle, C.SGD_HANDLE(deviceHandle))
 	return ToError(rv)
 }
 
 // SDFOpenSession 3.创建会话
 func (c *Ctx) SDFOpenSession(deviceHandle SessionHandle) (SessionHandle, error) {
 	var s C.SGD_HANDLE
-	var rv = C.SDFOpenSession(c.libHandle, C.SGD_HANDLE(deviceHandle), &s)
+	var rv = C.SDFOpenSession2(c.libHandle, C.SGD_HANDLE(deviceHandle), &s)
 	return SessionHandle(s), ToError(rv)
 }
 
 // SDFCloseSession 4.关闭会话
 func (c *Ctx) SDFCloseSession(sessionHandle SessionHandle) error {
-	var err = C.SDFCloseSession(c.libHandle, C.SGD_HANDLE(sessionHandle))
+	var err = C.SDFCloseSession2(c.libHandle, C.SGD_HANDLE(sessionHandle))
 	return ToError(err)
 }
 
@@ -350,7 +353,9 @@ func (c *Ctx) SWCSMRestoreImportECCKey(sessionHandle SessionHandle, keyIndex uin
 	cKeyData := C.CBytes(keyData)
 	defer C.free(cKeyData)
 
-	rv := C.SWCSMRestoreImportECCKey(c.libHandle, C.SGD_HANDLE(sessionHandle), C.SGD_UINT32(keyIndex), C.ECCref_MAX_BITS,
+	maxBits := uint32(ECCref_MAX_BITS)
+
+	rv := C.SWCSMRestoreImportECCKey(c.libHandle, C.SGD_HANDLE(sessionHandle), C.SGD_UINT32(keyIndex), C.SGD_UINT32(maxBits),
 		(*C.SGD_UCHAR)(cKeyData), C.SGD_UINT32(len(keyData)))
 	return ToError(rv)
 }

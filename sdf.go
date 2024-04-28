@@ -122,5 +122,12 @@ func (h *SDFHandle) Close() error {
 	}
 
 	//close device
-	return h.ctx.SDFCloseDevice(h.deviceHandle)
+	err := h.ctx.SDFCloseDevice(h.deviceHandle)
+	if err != nil {
+		return err
+	}
+
+	//destroy lib handle
+	h.ctx.Destroy()
+	return nil
 }
