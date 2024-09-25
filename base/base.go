@@ -204,23 +204,28 @@ func ToUCharPtr(data []byte) (dataPtr *C.SGD_UCHAR) {
 }
 
 func ConvertToECCrefPrivateKeyC(privateKey *sm2.PrivateKey) (pucPrivateKey C.ECCrefPrivateKey) {
-	pucPrivateKey.bits = C.ECCref_MAX_BITS
+	// sm2密钥长度 256
+	pucPrivateKey.bits = 256
 	dBytes := privateKey.D.Bytes()
+	// 前面32字节保留
 	for i := 0; i < len(dBytes); i++ {
-		pucPrivateKey.D[i] = C.SGD_UCHAR(dBytes[i])
+		pucPrivateKey.K[32+i] = C.SGD_UCHAR(dBytes[i])
 	}
 	return pucPrivateKey
 }
 
 func ConvertToECCrefPublicKeyC(publicKey *sm2.PublicKey) (pucPublicKey C.ECCrefPublicKey) {
-	pucPublicKey.bits = C.ECCref_MAX_BITS
+	// sm2密钥长度 256
+	pucPublicKey.bits = 256
 	xBytes := publicKey.X.Bytes()
 	yBytes := publicKey.Y.Bytes()
+	// 前面32字节保留
 	for i := 0; i < len(xBytes); i++ {
-		pucPublicKey.x[i] = C.SGD_UCHAR(xBytes[i])
+		pucPublicKey.x[32+i] = C.SGD_UCHAR(xBytes[i])
 	}
+	// 前面32字节保留
 	for i := 0; i < len(yBytes); i++ {
-		pucPublicKey.y[i] = C.SGD_UCHAR(yBytes[i])
+		pucPublicKey.y[32+i] = C.SGD_UCHAR(yBytes[i])
 	}
 	return pucPublicKey
 }
@@ -320,7 +325,7 @@ func (c *Ctx) SWCSMBackupExportECCKey(sessionHandle SessionHandle, keyIndex uint
 	keyBits := ECCref_MAX_BITS
 	keyDataLength := uint32(0)
 
-	keyDataPtr := C.malloc(C.size_t(96) * C.sizeof_uchar) // 官方密钥密文需要96字节空间
+	keyDataPtr := C.malloc(C.size_t(192) * C.sizeof_uchar) // 官方密钥密文需要192（64*3）字节空间
 	if keyDataPtr == nil {
 		return nil, errors.New("failed to allocate memory")
 	}

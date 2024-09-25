@@ -67,7 +67,7 @@ typedef struct RSArefPrivateKey_st
 
 
 /*ECC密钥*/
-#define ECCref_MAX_BITS			256
+#define ECCref_MAX_BITS			512
 #define ECCref_MAX_LEN			((ECCref_MAX_BITS+7) / 8)
 #define ECCref_MAX_CIPHER_LEN	136
 
@@ -81,17 +81,17 @@ typedef struct ECCrefPublicKey_st
 typedef struct ECCrefPrivateKey_st
 {
     unsigned int  bits;
-    unsigned char D[ECCref_MAX_LEN];
+    unsigned char K[ECCref_MAX_LEN];
 } ECCrefPrivateKey;
 
 /*ECC 密文*/
 typedef struct ECCCipher_st
 {
-	unsigned int  clength;  //C的有效长度
 	unsigned char x[ECCref_MAX_LEN];
 	unsigned char y[ECCref_MAX_LEN];
-	unsigned char C[ECCref_MAX_CIPHER_LEN];
-    unsigned char M[ECCref_MAX_LEN];
+	unsigned char M[32];
+	unsigned int  L;
+	unsigned char C[1];
 } ECCCipher;
 
 /*ECC 签名*/
