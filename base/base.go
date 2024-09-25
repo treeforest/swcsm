@@ -325,7 +325,7 @@ func (c *Ctx) SWCSMBackupExportECCKey(sessionHandle SessionHandle, keyIndex uint
 	keyBits := ECCref_MAX_BITS
 	keyDataLength := uint32(0)
 
-	keyDataPtr := C.malloc(C.size_t(192) * C.sizeof_uchar) // 官方密钥密文需要192（64*3）字节空间
+	keyDataPtr := C.malloc(C.size_t(96) * C.sizeof_uchar) // 官方密钥密文需要96字节空间
 	if keyDataPtr == nil {
 		return nil, errors.New("failed to allocate memory")
 	}
